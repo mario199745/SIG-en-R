@@ -7,14 +7,25 @@ data("countriesHigh")
 Datos <- read_csv("https://raw.githubusercontent.com/derek-corcoran-barrios/derek-corcoran-barrios.github.io/master/Presentaciones_Espacial/Bombus.csv")
 ## Miremos los datos
 
+#Transformar en una base de datos espacial 
+
 Datos <- Datos %>% 
   st_as_sf(coords = c(5,6), crs = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs +towgs84=0,0,0")
+
+#Map <- countriesHigh %>% st_as_sf()
+
+ggplot() + geom_sf(data= Map)
+ggplot() + geom_sf(data = Datos)
+ggplot() + geom_sf(dat = Map) + geom_sf(data = Datos)+theme_bw()
+
 
 ## ademas de tranformar en sf, cortaremos al extent de los datos
 
 Map <- countriesHigh %>% 
   st_as_sf() %>% 
   st_crop(Datos)
+
+
 
 ## Grafiquemos ambos datos
 
@@ -38,7 +49,7 @@ ggplot() + geom_sf(data = Map) +
   facet_wrap(~species) +
   theme_bw()
 
-## Hacer desaparecer la leyenda
+## Hacer desaparecer la leyenda del mapa 
 
 ggplot() + geom_sf(data = Map) + 
   geom_sf(data = Datos, aes(color = species, size = Measurement)) +
@@ -46,7 +57,7 @@ ggplot() + geom_sf(data = Map) +
   theme_bw() +
   theme(legend.position = "none")
 
-## Leyenda abajo
+## Leyenda del mapa en la parte inferior 
 
 ggplot() + geom_sf(data = Map) + 
   geom_sf(data = Datos, aes(color = species, size = Measurement)) +
@@ -90,7 +101,20 @@ Bioclim <- Bioclim[[c(1,7,12,15)]]
 clima <- Bioclim %>% raster::extract(B_impatiens) %>% 
   as.data.frame()
 
+#Extraer las condiciones en base a los puntos de presencia existentes 
+
+
+view(clima)
+
 B_impatiens <- B_impatiens %>% bind_cols(clima)
+
+view(B_impatiens)
+
+
+#Análisis de las condiciones con relación a la abundancia 
+
+ggplot(B_impatiens,aes(x = bio1, y = Measurement)) + geom_point()
+
 
 
 clima <- Bioclim %>% raster::extract(B_bifarius) %>% 
@@ -106,8 +130,12 @@ FitLM_bifarius <- lm(Measurement ~ bio1 + I(bio1^2) + bio7 + I(bio7^2)+ bio12 + 
 
 
 Abund_impatiens <- predict(Bioclim, FitLM_impatiens)
-
+#plot(Abund_impatiens)
+#Modelo lineal predicción de valores positivos y negativos 
 Abund_bifarius <- predict(Bioclim, FitLM_bifarius)
+plot(Abund_bifarius)
+
+
 
 
 ## GLM
@@ -119,7 +147,7 @@ FitLM_bifarius <- glm(Measurement ~ bio1 + I(bio1^2) + bio7 + I(bio7^2)+ bio12 +
 Abund_impatiens <- predict(Bioclim, FitLM_impatiens, type = "response")
 
 Abund_bifarius <- predict(Bioclim, FitLM_bifarius, type = "response")
-
+#plot(Abund_impatiens)
 
 Abund_impatiens_DF <- Abund_impatiens %>% 
   as("SpatialPixelsDataFrame") %>% 
